@@ -41,40 +41,47 @@
                             <button type="button" id="search-btn" class="btn-search">🔍 Search Nutrition</button>
                             <button type="button" id="my-foods-btn" class="btn-my-foods">📚 My Foods</button>
                         </div>
+                        <button type="button" id="toggle-details-btn" class="toggle-details">▼ Show Details</button>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="serving-size">Serving Size:</label>
-                        <input type="text" id="serving-size" placeholder="e.g., 1 cup, 2 slices, 1 serving" required>
+                <div id="food-details-section" class="collapsible-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="num-servings">Number of Servings:</label>
+                            <input type="number" id="num-servings" min="0.1" step="0.1" value="1" placeholder="1">
+                        </div>
+                        <div class="form-group">
+                            <label for="serving-size">Serving Size:</label>
+                            <input type="text" id="serving-size" placeholder="e.g., 1 cup, 2 slices, 1 serving" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="grams">Weight (grams):</label>
+                            <input type="number" id="grams" min="0" step="0.1" placeholder="e.g., 100">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="grams">Weight (grams):</label>
-                        <input type="number" id="grams" min="0" step="0.1" placeholder="e.g., 100">
-                    </div>
-                </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="calories">Calories:</label>
-                        <input type="number" id="calories" min="0" placeholder="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="protein">Protein (g):</label>
-                        <input type="number" id="protein" min="0" step="0.1" placeholder="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="carbs">Carbs (g):</label>
-                        <input type="number" id="carbs" min="0" step="0.1" placeholder="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="fat">Fat (g):</label>
-                        <input type="number" id="fat" min="0" step="0.1" placeholder="0" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="sodium">Sodium (mg):</label>
-                        <input type="number" id="sodium" min="0" step="1" placeholder="0" required>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="calories">Calories:</label>
+                            <input type="number" id="calories" min="0" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="protein">Protein (g):</label>
+                            <input type="number" id="protein" min="0" step="0.1" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="carbs">Carbs (g):</label>
+                            <input type="number" id="carbs" min="0" step="0.1" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fat">Fat (g):</label>
+                            <input type="number" id="fat" min="0" step="0.1" placeholder="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sodium">Sodium (mg):</label>
+                            <input type="number" id="sodium" min="0" step="1" placeholder="0" required>
+                        </div>
                     </div>
                 </div>
 
@@ -87,7 +94,10 @@
                     </div>
                 </div>
 
-                <button type="submit" class="btn-add">Add Food</button>
+                <div class="form-buttons">
+                    <button type="submit" class="btn-add">Add Food</button>
+                    <button type="button" id="clear-form-btn" class="btn-secondary">Clear</button>
+                </div>
             </form>
         </div>
 
@@ -95,6 +105,12 @@
             <label for="filter-date">Filter by Date:</label>
             <input type="date" id="filter-date">
             <button id="clear-filter" class="btn-secondary">Show All</button>
+            
+            <div class="data-management">
+                <button id="export-data-btn" class="btn-export">📥 Export Data</button>
+                <button id="import-data-btn" class="btn-import">📤 Import Data</button>
+                <input type="file" id="import-file-input" accept=".json" style="display: none;">
+            </div>
         </div>
 
         <div class="entries-section">
@@ -149,6 +165,10 @@
                     </div>
 
                     <div class="form-row">
+                        <div class="form-group">
+                            <label for="edit-num-servings">Number of Servings:</label>
+                            <input type="number" id="edit-num-servings" min="0.1" step="0.1" value="1">
+                        </div>
                         <div class="form-group">
                             <label for="edit-serving-size">Serving Size:</label>
                             <input type="text" id="edit-serving-size" required>
