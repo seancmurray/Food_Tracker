@@ -1,0 +1,821 @@
+// Storage keys for localStorage
+const STORAGE_KEY = 'foodTrackerData';
+const CUSTOM_FOODS_KEY = 'foodTrackerCustomFoods';
+
+// Get DOM elements
+const foodForm = document.getElementById('food-form');
+const dateInput = document.getElementById('date');
+const mealTypeInput = document.getElementById('meal-type');
+const foodNameInput = document.getElementById('food-name');
+const caloriesInput = document.getElementById('calories');
+const proteinInput = document.getElementById('protein');
+const carbsInput = document.getElementById('carbs');
+const fatInput = document.getElementById('fat');
+const sodiumInput = document.getElementById('sodium');
+const numServingsInput = document.getElementById('num-servings');
+const servingSizeInput = document.getElementById('serving-size');
+const gramsInput = document.getElementById('grams');
+const entriesContainer = document.getElementById('entries-container');
+
+// Store base nutrition values (per 1 serving) for multiplier calculation
+let baseNutritionValues = null;
+const filterDateInput = document.getElementById('filter-date');
+const clearFilterBtn = document.getElementById('clear-filter');
+const exportDataBtn = document.getElementById('export-data-btn');
+const importDataBtn = document.getElementById('import-data-btn');
+const importFileInput = document.getElementById('import-file-input');
+const toggleDetailsBtn = document.getElementById('toggle-details-btn');
+const foodDetailsSection = document.getElementById('food-details-section');
+const searchBtn = document.getElementById('search-btn');
+const myFoodsBtn = document.getElementById('my-foods-btn');
+const searchModal = document.getElementById('search-modal');
+const closeModalBtn = document.getElementById('close-modal');
+const searchResultsContainer = document.getElementById('search-results');
+const modalTitle = document.getElementById('modal-title');
+const saveCustomFoodCheckbox = document.getElementById('save-custom-food');
+
+// Edit modal elements
+const editModal = document.getElementById('edit-modal');
+const closeEditModalBtn = document.getElementById('close-edit-modal');
+const cancelEditBtn = document.getElementById('cancel-edit');
+const editForm = document.getElementById('edit-form');
+const editDateInput = document.getElementById('edit-date');
+const editMealTypeInput = document.getElementById('edit-meal-type');
+const editFoodNameInput = document.getElementById('edit-food-name');
+const editCaloriesInput = document.getElementById('edit-calories');
+const editProteinInput = document.getElementById('edit-protein');
+const editCarbsInput = document.getElementById('edit-carbs');
+const editFatInput = document.getElementById('edit-fat');
+const editSodiumInput = document.getElementById('edit-sodium');
+const editNumServingsInput = document.getElementById('edit-num-servings');
+const editServingSizeInput = document.getElementById('edit-serving-size');
+const editGramsInput = document.getElementById('edit-grams');
+
+let currentEditId = null;
+let editBaseNutritionValues = null;
+
+// Initialize app
+let foodEntries = loadEntries();
+let customFoods = loadCustomFoods();
+let currentFilter = null;
+
+// Set default date to today
+dateInput.valueAsDate = new Date();
+
+// Event listeners
+foodForm.addEventListener('submit', handleAddFood);
+filterDateInput.addEventListener('change', handleFilterChange);
+clearFilterBtn.addEventListener('click', handleClearFilter);
+const clearFormBtn = document.getElementById('clear-form-btn');
+clearFormBtn.addEventListener('click', handleClearForm);
+exportDataBtn.addEventListener('click', handleExportData);
+importDataBtn.addEventListener('click', () => importFileInput.click());
+importFileInput.addEventListener('change', handleImportData);
+toggleDetailsBtn.addEventListener('click', handleToggleDetails);
+searchBtn.addEventListener('click', handleSearchNutrition);
+myFoodsBtn.addEventListener('click', showMyFoods);
+closeModalBtn.addEventListener('click', closeModal);
+searchModal.addEventListener('click', (e) => {
+    if (e.target === searchModal) closeModal();
+});
+closeEditModalBtn.addEventListener('click', closeEditModal);
+cancelEditBtn.addEventListener('click', closeEditModal);
+editModal.addEventListener('click', (e) => {
+    if (e.target === editModal) closeEditModal();
+});
+editForm.addEventListener('submit', handleEditSubmit);
+
+// Add event listeners for serving multiplier
+numServingsInput.addEventListener('input', handleServingMultiplierChange);
+editNumServingsInput.addEventListener('input', handleEditServingMultiplierChange);
+
+// Load entries from localStorage
+function loadEntries() {
+    const data = localStorage.getItem(STORAGE_KEY);
+    return data ? JSON.parse(data) : [];
+}
+
+// Save entries to localStorage
+function saveEntries() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(foodEntries));
+}
+
+// Load custom foods from localStorage
+function loadCustomFoods() {
+    const data = localStorage.getItem(CUSTOM_FOODS_KEY);
+    return data ? JSON.parse(data) : [];
+}
+
+// Save custom foods to localStorage
+function saveCustomFoods() {
+    localStorage.setItem(CUSTOM_FOODS_KEY, JSON.stringify(customFoods));
+}
+
+// Handle form submission
+function handleAddFood(e) {
+    e.preventDefault();
+    
+    const newEntry = {
+        id: Date.now().toString(),
+        date: dateInput.value,
+        mealType: mealTypeInput.value,
+        foodName: foodNameInput.value.trim(),
+        numServings: parseFloat(numServingsInput.value) || 1,
+        servingSize: servingSizeInput.value.trim(),
+        grams: gramsInput.value ? parseFloat(gramsInput.value) : null,
+        calories: parseFloat(caloriesInput.value),
+        protein: parseFloat(proteinInput.value),
+        carbs: parseFloat(carbsInput.value),
+        fat: parseFloat(fatInput.value),
+        sodium: parseFloat(sodiumInput.value)
+    };
+    
+    foodEntries.push(newEntry);
+    saveEntries();
+    
+    // Save as custom food if checkbox is checked
+    if (saveCustomFoodCheckbox.checked) {
+        const customFood = {
+            id: Date.now().toString(),
+            name: newEntry.foodName,
+            servingSize: newEntry.servingSize,
+            grams: newEntry.grams,
+            calories: newEntry.calories,
+            protein: newEntry.protein,
+            carbs: newEntry.carbs,
+            fat: newEntry.fat,
+            sodium: newEntry.sodium
+        };
+        
+        // Check if already exists
+        const exists = customFoods.some(f => f.name.toLowerCase() === customFood.name.toLowerCase());
+        if (!exists) {
+            customFoods.push(customFood);
+            saveCustomFoods();
+            showNotification('Food entry added and saved to My Foods!');
+        } else {
+            showNotification('Food entry added successfully!');
+        }
+    } else {
+        showNotification('Food entry added successfully!');
+    }
+    
+    renderEntries();
+    
+    // Reset form
+    foodForm.reset();
+    dateInput.valueAsDate = new Date();
+}
+
+// Handle serving multiplier change
+function handleServingMultiplierChange() {
+    if (!baseNutritionValues) return;
+    
+    const multiplier = parseFloat(numServingsInput.value) || 1;
+    caloriesInput.value = Math.round(baseNutritionValues.calories * multiplier);
+    proteinInput.value = Math.round(baseNutritionValues.protein * multiplier * 10) / 10;
+    carbsInput.value = Math.round(baseNutritionValues.carbs * multiplier * 10) / 10;
+    fatInput.value = Math.round(baseNutritionValues.fat * multiplier * 10) / 10;
+    sodiumInput.value = Math.round(baseNutritionValues.sodium * multiplier);
+    
+    if (baseNutritionValues.grams) {
+        gramsInput.value = Math.round(baseNutritionValues.grams * multiplier * 10) / 10;
+    }
+}
+
+// Handle edit serving multiplier change
+function handleEditServingMultiplierChange() {
+    if (!editBaseNutritionValues) return;
+    
+    const multiplier = parseFloat(editNumServingsInput.value) || 1;
+    editCaloriesInput.value = Math.round(editBaseNutritionValues.calories * multiplier);
+    editProteinInput.value = Math.round(editBaseNutritionValues.protein * multiplier * 10) / 10;
+    editCarbsInput.value = Math.round(editBaseNutritionValues.carbs * multiplier * 10) / 10;
+    editFatInput.value = Math.round(editBaseNutritionValues.fat * multiplier * 10) / 10;
+    editSodiumInput.value = Math.round(editBaseNutritionValues.sodium * multiplier);
+    
+    if (editBaseNutritionValues.grams) {
+        editGramsInput.value = Math.round(editBaseNutritionValues.grams * multiplier * 10) / 10;
+    }
+}
+
+// Delete entry
+function deleteEntry(id) {
+    if (confirm('Are you sure you want to delete this entry?')) {
+        foodEntries = foodEntries.filter(entry => entry.id !== id);
+        saveEntries();
+        renderEntries();
+        showNotification('Entry deleted successfully!');
+    }
+}
+
+// Handle toggle details
+function handleToggleDetails() {
+    const isCollapsed = foodDetailsSection.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        foodDetailsSection.classList.remove('collapsed');
+        toggleDetailsBtn.textContent = '▲ Hide Details';
+    } else {
+        foodDetailsSection.classList.add('collapsed');
+        toggleDetailsBtn.textContent = '▼ Show Details';
+    }
+}
+
+// Handle filter change
+function handleFilterChange() {
+    currentFilter = filterDateInput.value;
+    renderEntries();
+}
+
+// Handle clear filter
+function handleClearFilter() {
+    currentFilter = null;
+    filterDateInput.value = '';
+    renderEntries();
+}
+
+// Handle clear form
+function handleClearForm() {
+    // Clear all input fields except date and meal type
+    foodNameInput.value = '';
+    numServingsInput.value = 1;
+    servingSizeInput.value = '';
+    gramsInput.value = '';
+    caloriesInput.value = '';
+    proteinInput.value = '';
+    carbsInput.value = '';
+    fatInput.value = '';
+    sodiumInput.value = '';
+    saveCustomFoodCheckbox.checked = false;
+    
+    // Reset base nutrition values
+    baseNutritionValues = null;
+    
+    showNotification('Form cleared');
+}
+
+// Handle export data
+function handleExportData() {
+    const exportData = {
+        version: '1.0',
+        exportDate: new Date().toISOString(),
+        foodEntries: foodEntries,
+        customFoods: customFoods
+    };
+    
+    const dataStr = JSON.stringify(exportData, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(dataBlob);
+    link.download = `food-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    
+    showNotification('Data exported successfully!');
+}
+
+// Handle import data
+function handleImportData(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const importData = JSON.parse(e.target.result);
+            
+            // Validate data structure
+            if (!importData.foodEntries || !Array.isArray(importData.foodEntries)) {
+                throw new Error('Invalid data format');
+            }
+            
+            // Confirm before overwriting
+            const confirmMsg = `This will replace all current data.\n\nCurrent entries: ${foodEntries.length}\nImporting entries: ${importData.foodEntries.length}\n\nContinue?`;
+            
+            if (!confirm(confirmMsg)) {
+                importFileInput.value = ''; // Reset file input
+                return;
+            }
+            
+            // Import data
+            foodEntries = importData.foodEntries;
+            customFoods = importData.customFoods || [];
+            
+            // Save to localStorage
+            saveEntries();
+            saveCustomFoods();
+            
+            // Refresh display
+            renderEntries();
+            
+            showNotification(`Data imported successfully! ${foodEntries.length} entries restored.`);
+            
+        } catch (error) {
+            console.error('Import error:', error);
+            alert('Failed to import data. Please ensure the file is a valid Food Tracker backup.');
+        }
+        
+        // Reset file input
+        importFileInput.value = '';
+    };
+    
+    reader.readAsText(file);
+}
+
+// Search for nutrition information
+async function handleSearchNutrition() {
+    const foodName = foodNameInput.value.trim();
+    
+    if (!foodName) {
+        alert('Please enter a food name first');
+        return;
+    }
+    
+    searchBtn.disabled = true;
+    searchBtn.textContent = '🔍 Searching...';
+    
+    try {
+        const results = await searchFoodNutrition(foodName);
+        displaySearchResults(results);
+        openModal();
+    } catch (error) {
+        console.error('Search error:', error);
+        alert('Failed to search nutrition data. Please try again.');
+    } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = '🔍 Search Nutrition';
+    }
+}
+
+// Search USDA FoodData Central API
+async function searchFoodNutrition(foodName) {
+    const apiUrl = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(foodName)}&pageSize=5&api_key=DEMO_KEY`;
+    
+    const response = await fetch(apiUrl);
+    if (!response.ok) {
+        throw new Error('API request failed');
+    }
+    
+    const data = await response.json();
+    return data.foods || [];
+}
+
+// Display search results in modal
+function displaySearchResults(foods) {
+    modalTitle.textContent = 'Select Nutritional Information';
+    
+    if (foods.length === 0) {
+        searchResultsContainer.innerHTML = `
+            <div class="no-results">
+                <strong>No results found</strong>
+                <p>This might be a branded product or supplement not in the USDA database.</p>
+                <p><strong>Tip:</strong> Close this window, manually enter the nutrition info from the product label, and check "Save as custom food" to reuse it later!</p>
+            </div>
+        `;
+        return;
+    }
+    
+    searchResultsContainer.innerHTML = foods.map(food => {
+        const nutrients = extractNutrients(food);
+        return `
+            <div class="search-result-item" data-food='${JSON.stringify(nutrients).replace(/'/g, "&apos;")}'>
+                <div class="result-food-name">${food.description}</div>
+                <div class="result-macros">
+                    <div class="result-macro"><strong>Calories:</strong> ${nutrients.calories}</div>
+                    <div class="result-macro"><strong>Protein:</strong> ${nutrients.protein}g</div>
+                    <div class="result-macro"><strong>Carbs:</strong> ${nutrients.carbs}g</div>
+                    <div class="result-macro"><strong>Fat:</strong> ${nutrients.fat}g</div>
+                    <div class="result-macro"><strong>Sodium:</strong> ${nutrients.sodium}mg</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Add click handlers
+    document.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const foodData = JSON.parse(item.dataset.food);
+            fillNutritionFields(foodData);
+            closeModal();
+        });
+    });
+}
+
+// Extract nutrients from API response
+function extractNutrients(food) {
+    const nutrients = food.foodNutrients || [];
+    
+    const findNutrient = (names) => {
+        const nutrient = nutrients.find(n => 
+            names.some(name => n.nutrientName && n.nutrientName.toLowerCase().includes(name.toLowerCase()))
+        );
+        return nutrient ? Math.round(nutrient.value * 10) / 10 : 0;
+    };
+    
+    return {
+        name: food.description,
+        calories: findNutrient(['Energy', 'Calories']) || Math.round((findNutrient(['Protein']) * 4) + (findNutrient(['Carbohydrate']) * 4) + (findNutrient(['Total lipid', 'Fat']) * 9)),
+        protein: findNutrient(['Protein']),
+        carbs: findNutrient(['Carbohydrate']),
+        fat: findNutrient(['Total lipid', 'Fat']),
+        sodium: findNutrient(['Sodium'])
+    };
+}
+
+// Fill nutrition fields with selected data
+function fillNutritionFields(foodData) {
+    // Store base nutrition values for multiplier calculations
+    baseNutritionValues = {
+        calories: foodData.calories,
+        protein: foodData.protein,
+        carbs: foodData.carbs,
+        fat: foodData.fat,
+        sodium: foodData.sodium || 0,
+        grams: foodData.grams || null
+    };
+    
+    // Reset to 1 serving and fill fields
+    numServingsInput.value = 1;
+    if (foodData.servingSize) servingSizeInput.value = foodData.servingSize;
+    if (foodData.grams) gramsInput.value = foodData.grams;
+    caloriesInput.value = foodData.calories;
+    proteinInput.value = foodData.protein;
+    carbsInput.value = foodData.carbs;
+    fatInput.value = foodData.fat;
+    sodiumInput.value = foodData.sodium || 0;
+    
+    showNotification('Nutrition data loaded! Adjust "Number of Servings" to multiply macros.');
+}
+
+// Open modal
+function openModal() {
+    searchModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close modal
+function closeModal() {
+    searchModal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+}
+
+// Open edit modal
+function openEditModal(id) {
+    const entry = foodEntries.find(e => e.id === id);
+    if (!entry) return;
+    
+    currentEditId = id;
+    
+    // Calculate base values (divide by num servings to get per-serving values)
+    const numServings = entry.numServings || 1;
+    editBaseNutritionValues = {
+        calories: Math.round(entry.calories / numServings),
+        protein: Math.round((entry.protein / numServings) * 10) / 10,
+        carbs: Math.round((entry.carbs / numServings) * 10) / 10,
+        fat: Math.round((entry.fat / numServings) * 10) / 10,
+        sodium: Math.round(entry.sodium / numServings),
+        grams: entry.grams ? Math.round((entry.grams / numServings) * 10) / 10 : null
+    };
+    
+    editDateInput.value = entry.date;
+    editMealTypeInput.value = entry.mealType;
+    editFoodNameInput.value = entry.foodName;
+    editNumServingsInput.value = numServings;
+    editServingSizeInput.value = entry.servingSize || '';
+    editGramsInput.value = entry.grams || '';
+    editCaloriesInput.value = entry.calories;
+    editProteinInput.value = entry.protein;
+    editCarbsInput.value = entry.carbs;
+    editFatInput.value = entry.fat;
+    editSodiumInput.value = entry.sodium;
+    
+    editModal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+// Close edit modal
+function closeEditModal() {
+    editModal.classList.remove('active');
+    document.body.style.overflow = 'auto';
+    currentEditId = null;
+}
+
+// Handle edit form submission
+function handleEditSubmit(e) {
+    e.preventDefault();
+    
+    const entryIndex = foodEntries.findIndex(e => e.id === currentEditId);
+    if (entryIndex === -1) return;
+    
+    // Update the entry
+    foodEntries[entryIndex] = {
+        id: currentEditId,
+        date: editDateInput.value,
+        mealType: editMealTypeInput.value,
+        foodName: editFoodNameInput.value.trim(),
+        numServings: parseFloat(editNumServingsInput.value) || 1,
+        servingSize: editServingSizeInput.value.trim(),
+        grams: editGramsInput.value ? parseFloat(editGramsInput.value) : null,
+        calories: parseFloat(editCaloriesInput.value),
+        protein: parseFloat(editProteinInput.value),
+        carbs: parseFloat(editCarbsInput.value),
+        fat: parseFloat(editFatInput.value),
+        sodium: parseFloat(editSodiumInput.value)
+    };
+    
+    saveEntries();
+    renderEntries();
+    closeEditModal();
+    showNotification('Food entry updated successfully!');
+}
+
+// Show custom foods
+function showMyFoods() {
+    modalTitle.textContent = 'My Custom Foods';
+    
+    if (customFoods.length === 0) {
+        searchResultsContainer.innerHTML = `
+            <div class="no-results">
+                <strong>No custom foods yet</strong>
+                <p>Save your frequently used foods (supplements, protein powders, etc.) by checking "Save as custom food" when adding them!</p>
+            </div>
+        `;
+        openModal();
+        return;
+    }
+    
+    searchResultsContainer.innerHTML = customFoods.map(food => `
+        <div class="search-result-item custom-food-item" data-food='${JSON.stringify(food).replace(/'/g, "&apos;")}'>
+            <button class="delete-custom-food" data-id="${food.id}">Delete</button>
+            <div class="result-food-name">${food.name}</div>
+            ${food.servingSize ? `<div class="result-serving">${food.servingSize}${food.grams ? ` (${food.grams}g)` : ''}</div>` : ''}
+            <div class="result-macros">
+                <div class="result-macro"><strong>Calories:</strong> ${food.calories}</div>
+                <div class="result-macro"><strong>Protein:</strong> ${food.protein}g</div>
+                <div class="result-macro"><strong>Carbs:</strong> ${food.carbs}g</div>
+                <div class="result-macro"><strong>Fat:</strong> ${food.fat}g</div>
+                <div class="result-macro"><strong>Sodium:</strong> ${food.sodium || 0}mg</div>
+            </div>
+        </div>
+    `).join('');
+    
+    // Add click handlers for selecting
+    document.querySelectorAll('.search-result-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            // Don't trigger if clicking delete button
+            if (e.target.classList.contains('delete-custom-food')) return;
+            
+            const foodData = JSON.parse(item.dataset.food);
+            fillNutritionFields(foodData);
+            closeModal();
+        });
+    });
+    
+    // Add delete handlers
+    document.querySelectorAll('.delete-custom-food').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = btn.dataset.id;
+            deleteCustomFood(id);
+        });
+    });
+    
+    openModal();
+}
+
+// Delete custom food
+function deleteCustomFood(id) {
+    if (confirm('Delete this custom food?')) {
+        customFoods = customFoods.filter(f => f.id !== id);
+        saveCustomFoods();
+        showMyFoods(); // Refresh the list
+        showNotification('Custom food deleted');
+    }
+}
+
+// Render all entries
+function renderEntries() {
+    let entriesToDisplay = [...foodEntries];
+    
+    // Apply filter if set
+    if (currentFilter) {
+        entriesToDisplay = entriesToDisplay.filter(entry => entry.date === currentFilter);
+    }
+    
+    if (entriesToDisplay.length === 0) {
+        entriesContainer.innerHTML = '<div class="empty-state">No food entries yet. Start tracking your meals!</div>';
+        return;
+    }
+    
+    // Group entries by date
+    const groupedByDate = groupByDate(entriesToDisplay);
+    
+    // Sort dates in descending order (newest first)
+    const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
+    
+    entriesContainer.innerHTML = sortedDates.map(date => {
+        const dateEntries = groupedByDate[date];
+        const mealOrder = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+        const groupedByMeal = groupByMealType(dateEntries);
+        
+        // Calculate daily totals
+        const dailyTotals = calculateTotals(dateEntries);
+        
+        return `
+            <div class="date-group">
+                <div class="date-header">${formatDate(date)}</div>
+                <div class="date-summary">
+                    <div class="summary-item"><strong>Total Calories:</strong> ${dailyTotals.calories}</div>
+                    <div class="summary-item"><strong>Protein:</strong> ${dailyTotals.protein}g</div>
+                    <div class="summary-item"><strong>Carbs:</strong> ${dailyTotals.carbs}g</div>
+                    <div class="summary-item"><strong>Fat:</strong> ${dailyTotals.fat}g</div>
+                    <div class="summary-item"><strong>Sodium:</strong> ${dailyTotals.sodium}mg</div>
+                </div>
+                ${mealOrder.map(mealType => {
+                    if (groupedByMeal[mealType] && groupedByMeal[mealType].length > 0) {
+                        return renderMealGroup(mealType, groupedByMeal[mealType]);
+                    }
+                    return '';
+                }).join('')}
+            </div>
+        `;
+    }).join('');
+    
+    // Attach edit event listeners
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            openEditModal(id);
+        });
+    });
+    
+    // Attach delete event listeners
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const id = e.target.dataset.id;
+            deleteEntry(id);
+        });
+    });
+}
+
+// Group entries by date
+function groupByDate(entries) {
+    return entries.reduce((groups, entry) => {
+        const date = entry.date;
+        if (!groups[date]) {
+            groups[date] = [];
+        }
+        groups[date].push(entry);
+        return groups;
+    }, {});
+}
+
+// Group entries by meal type
+function groupByMealType(entries) {
+    return entries.reduce((groups, entry) => {
+        const mealType = entry.mealType;
+        if (!groups[mealType]) {
+            groups[mealType] = [];
+        }
+        groups[mealType].push(entry);
+        return groups;
+    }, {});
+}
+
+// Render meal group
+function renderMealGroup(mealType, entries) {
+    return `
+        <div class="meal-group">
+            <div class="meal-type">${mealType}</div>
+            ${entries.map(entry => `
+                <div class="food-item">
+                    <div class="food-info">
+                        <div class="food-name">${entry.foodName}</div>
+                        <div class="food-serving">${entry.numServings && entry.numServings !== 1 ? `${entry.numServings}x ` : ''}${entry.servingSize}${entry.grams ? ` (${entry.grams}g)` : ''}</div>
+                        <div class="food-macros">
+                            <div class="macro">
+                                <span class="macro-label">Cal:</span>
+                                <span>${entry.calories}</span>
+                            </div>
+                            <div class="macro">
+                                <span class="macro-label">P:</span>
+                                <span>${entry.protein}g</span>
+                            </div>
+                            <div class="macro">
+                                <span class="macro-label">C:</span>
+                                <span>${entry.carbs}g</span>
+                            </div>
+                            <div class="macro">
+                                <span class="macro-label">F:</span>
+                                <span>${entry.fat}g</span>
+                            </div>
+                            <div class="macro">
+                                <span class="macro-label">Na:</span>
+                                <span>${entry.sodium}mg</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="food-actions">
+                        <button class="btn-edit" data-id="${entry.id}">Edit</button>
+                        <button class="btn-delete" data-id="${entry.id}">Delete</button>
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    `;
+}
+
+// Calculate totals for entries
+function calculateTotals(entries) {
+    return entries.reduce((totals, entry) => {
+        totals.calories += entry.calories;
+        totals.protein += entry.protein;
+        totals.carbs += entry.carbs;
+        totals.fat += entry.fat;
+        totals.sodium += entry.sodium || 0;
+        return totals;
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0, sodium: 0 });
+}
+
+// Format date for display
+function formatDate(dateString) {
+    const date = new Date(dateString + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const entryDate = new Date(date);
+    entryDate.setHours(0, 0, 0, 0);
+    
+    if (entryDate.getTime() === today.getTime()) {
+        return 'Today - ' + date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    } else if (entryDate.getTime() === yesterday.getTime()) {
+        return 'Yesterday - ' + date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    } else if (entryDate.getTime() === tomorrow.getTime()) {
+        return 'Tomorrow - ' + date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    } else {
+        return date.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+}
+
+// Show notification
+function showNotification(message) {
+    // Simple alert for now - could be enhanced with a toast notification
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #28a745;
+        color: white;
+        padding: 15px 25px;
+        border-radius: 8px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-out';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+    
+    @keyframes slideOut {
+        from {
+            transform: translateX(0);
+            opacity: 1;
+        }
+        to {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+    }
+`;
+document.head.appendChild(style);
+
+// Initial render
+renderEntries();
