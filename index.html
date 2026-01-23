@@ -8,12 +8,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <!-- Navigation -->
     <nav class="navbar">
         <div class="nav-container">
-            <div class="logo">FUEL</div>
+            <a href="#" class="logo">FUEL</a>
             <div class="nav-links">
                 <a href="#add">ADD</a>
                 <a href="#entries">ENTRIES</a>
@@ -25,7 +26,11 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-content">
-            <h1 class="hero-title">TRACK.<br>FUEL.<br>PERFORM.</h1>
+            <h1 class="hero-title">
+                <span class="hero-word">TRACK.</span><br>
+                <span class="hero-word">FUEL.</span><br>
+                <span class="hero-word">PERFORM.</span>
+            </h1>
             <p class="hero-subtitle">Your nutrition journey starts here</p>
         </div>
     </section>
@@ -145,6 +150,59 @@
                 <h2 class="section-title">YOUR ENTRIES</h2>
             </div>
             <div id="entries-container"></div>
+        </section>
+
+        <!-- Stats Section -->
+        <section id="stats" class="section stats-section">
+            <div class="section-header">
+                <h2 class="section-title">YOUR STATS</h2>
+            </div>
+            
+            <div class="stats-grid">
+                <!-- Daily Calories Chart -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">DAILY CALORIES</h3>
+                    <div class="chart-container">
+                        <canvas id="calories-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Macros Breakdown Chart -->
+                <div class="stat-card">
+                    <h3 class="stat-card-title">MACROS BREAKDOWN (TODAY)</h3>
+                    <div class="chart-container">
+                        <canvas id="macros-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Weekly Overview -->
+                <div class="stat-card full-width">
+                    <h3 class="stat-card-title">7-DAY OVERVIEW</h3>
+                    <div class="chart-container">
+                        <canvas id="weekly-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Quick Stats Cards -->
+                <div class="quick-stats">
+                    <div class="quick-stat-item">
+                        <div class="quick-stat-value" id="avg-calories">—</div>
+                        <div class="quick-stat-label">AVG DAILY CALORIES</div>
+                    </div>
+                    <div class="quick-stat-item">
+                        <div class="quick-stat-value" id="total-protein">—</div>
+                        <div class="quick-stat-label">TOTAL PROTEIN (7D)</div>
+                    </div>
+                    <div class="quick-stat-item">
+                        <div class="quick-stat-value" id="total-entries">—</div>
+                        <div class="quick-stat-label">TOTAL ENTRIES</div>
+                    </div>
+                    <div class="quick-stat-item">
+                        <div class="quick-stat-value" id="best-day">—</div>
+                        <div class="quick-stat-label">MOST ACTIVE DAY</div>
+                    </div>
+                </div>
+            </div>
         </section>
     </div>
 

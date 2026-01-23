@@ -819,3 +819,331 @@ document.head.appendChild(style);
 
 // Initial render
 renderEntries();
+
+// ===== STATS FUNCTIONALITY =====
+let caloriesChart = null;
+let macrosChart = null;
+let weeklyChart = null;
+
+function initializeCharts() {
+    const caloriesCtx = document.getElementById('calories-chart');
+    const macrosCtx = document.getElementById('macros-chart');
+    const weeklyCtx = document.getElementById('weekly-chart');
+
+    if (!caloriesCtx || !macrosCtx || !weeklyCtx) {
+        console.log('Chart canvases not found, retrying...');
+        setTimeout(initializeCharts, 200);
+        return;
+    }
+
+    console.log('Initializing charts...');
+
+    // Chart.js default configuration
+    const chartOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                labels: {
+                    font: {
+                        family: "'Inter', sans-serif",
+                        weight: 700,
+                        size: 12
+                    },
+                    color: '#000000'
+                }
+            }
+        }
+    };
+
+    // Daily Calories Bar Chart
+    caloriesChart = new Chart(caloriesCtx, {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Calories',
+                data: [],
+                backgroundColor: '#d7392e',
+                borderColor: '#000000',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            ...chartOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e5e5e5'
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 600
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 600
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Macros Pie Chart
+    macrosChart = new Chart(macrosCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Protein', 'Carbs', 'Fat'],
+            datasets: [{
+                data: [0, 0, 0],
+                backgroundColor: ['#d7392e', '#ec6533', '#000000'],
+                borderColor: '#ffffff',
+                borderWidth: 3
+            }]
+        },
+        options: {
+            ...chartOptions,
+            cutout: '60%'
+        }
+    });
+
+    // Weekly Overview Line Chart
+    weeklyChart = new Chart(weeklyCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Calories',
+                    data: [],
+                    borderColor: '#d7392e',
+                    backgroundColor: 'rgba(215, 57, 46, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                },
+                {
+                    label: 'Protein (g)',
+                    data: [],
+                    borderColor: '#ec6533',
+                    backgroundColor: 'rgba(236, 101, 51, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            ...chartOptions,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: '#e5e5e5'
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 600
+                        }
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 600
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    console.log('Charts initialized successfully');
+    updateStats();
+}
+
+function updateStats() {
+    const entries = loadEntries();
+    
+    console.log('Updating stats with entries:', entries);
+    
+    if (!entries || entries.length === 0) {
+        console.log('No entries found');
+        // Set default values for empty state
+        document.getElementById('avg-calories').textContent = '0';
+        document.getElementById('total-protein').textContent = '0g';
+        document.getElementById('total-entries').textContent = '0';
+        document.getElementById('best-day').textContent = '—';
+        return;
+    }
+    
+    // Get last 7 days of data
+    const last7Days = getLast7DaysData(entries);
+    const todayData = getTodayData(entries);
+    
+    console.log('Last 7 days data:', last7Days);
+    console.log('Today data:', todayData);
+    
+    // Update Daily Calories Chart
+    updateCaloriesChart(last7Days);
+    
+    // Update Macros Breakdown (Today)
+    updateMacrosChart(todayData);
+    
+    // Update Weekly Overview
+    updateWeeklyChart(last7Days);
+    
+    // Update Quick Stats
+    updateQuickStats(entries, last7Days);
+    
+    console.log('Stats updated:', { entries: entries.length, last7Days });
+}
+
+function getLast7DaysData(entries) {
+    const today = new Date();
+    const last7Days = [];
+    
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const dayEntries = entries.filter(entry => entry.date === dateStr);
+        const totals = calculateDayTotals(dayEntries);
+        
+        last7Days.push({
+            date: dateStr,
+            label: formatDateLabel(date),
+            ...totals
+        });
+    }
+    
+    return last7Days;
+}
+
+function getTodayData(entries) {
+    const today = new Date().toISOString().split('T')[0];
+    const todayEntries = entries.filter(entry => entry.date === today);
+    return calculateDayTotals(todayEntries);
+}
+
+function calculateDayTotals(entries) {
+    return entries.reduce((totals, entry) => {
+        totals.calories += entry.calories || 0;
+        totals.protein += entry.protein || 0;
+        totals.carbs += entry.carbs || 0;
+        totals.fat += entry.fat || 0;
+        return totals;
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+}
+
+function formatDateLabel(date) {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${days[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`;
+}
+
+function updateCaloriesChart(last7Days) {
+    if (!caloriesChart) return;
+    
+    caloriesChart.data.labels = last7Days.map(day => day.label);
+    caloriesChart.data.datasets[0].data = last7Days.map(day => day.calories);
+    caloriesChart.update();
+}
+
+function updateMacrosChart(todayData) {
+    if (!macrosChart) return;
+    
+    const { protein, carbs, fat } = todayData;
+    
+    // Convert to calories (protein: 4 cal/g, carbs: 4 cal/g, fat: 9 cal/g)
+    const proteinCals = protein * 4;
+    const carbsCals = carbs * 4;
+    const fatCals = fat * 9;
+    
+    macrosChart.data.datasets[0].data = [proteinCals, carbsCals, fatCals];
+    macrosChart.update();
+}
+
+function updateWeeklyChart(last7Days) {
+    if (!weeklyChart) return;
+    
+    weeklyChart.data.labels = last7Days.map(day => day.label);
+    weeklyChart.data.datasets[0].data = last7Days.map(day => day.calories);
+    weeklyChart.data.datasets[1].data = last7Days.map(day => day.protein);
+    weeklyChart.update();
+}
+
+function updateQuickStats(entries, last7Days) {
+    // Average daily calories (last 7 days)
+    const avgCalories = Math.round(
+        last7Days.reduce((sum, day) => sum + day.calories, 0) / 7
+    );
+    document.getElementById('avg-calories').textContent = avgCalories;
+    
+    // Total protein (last 7 days)
+    const totalProtein = Math.round(
+        last7Days.reduce((sum, day) => sum + day.protein, 0)
+    );
+    document.getElementById('total-protein').textContent = `${totalProtein}g`;
+    
+    // Total entries
+    document.getElementById('total-entries').textContent = entries.length;
+    
+    // Most active day
+    const dayCount = {};
+    entries.forEach(entry => {
+        dayCount[entry.date] = (dayCount[entry.date] || 0) + 1;
+    });
+    
+    let bestDay = '—';
+    let maxEntries = 0;
+    for (const [date, count] of Object.entries(dayCount)) {
+        if (count > maxEntries) {
+            maxEntries = count;
+            const dateObj = new Date(date + 'T00:00:00');
+            bestDay = formatDateLabel(dateObj);
+        }
+    }
+    document.getElementById('best-day').textContent = bestDay;
+}
+
+// Initialize charts when DOM is loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initializeCharts, 100);
+    });
+} else {
+    setTimeout(initializeCharts, 100);
+}
+
+// Override renderEntries to update stats
+const _originalRenderEntries = renderEntries;
+window.renderEntries = function() {
+    _originalRenderEntries.call(this);
+    if (caloriesChart && macrosChart && weeklyChart) {
+        updateStats();
+    }
+};
+
+// Also listen for storage changes
+window.addEventListener('storage', function(e) {
+    if (e.key === STORAGE_KEY && (caloriesChart && macrosChart && weeklyChart)) {
+        updateStats();
+    }
+});
