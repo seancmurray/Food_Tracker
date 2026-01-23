@@ -32,6 +32,8 @@ const searchModal = document.getElementById('search-modal');
 const closeModalBtn = document.getElementById('close-modal');
 const searchResultsContainer = document.getElementById('search-results');
 const modalTitle = document.getElementById('modal-title');
+const customFoodsSearch = document.getElementById('custom-foods-search');
+const customFoodsSearchInput = document.getElementById('custom-foods-search-input');
 const saveCustomFoodCheckbox = document.getElementById('save-custom-food');
 
 // Edit modal elements
@@ -53,6 +55,7 @@ const editGramsInput = document.getElementById('edit-grams');
 
 let currentEditId = null;
 let editBaseNutritionValues = null;
+let customFoodsQuery = '';
 
 // Initialize app
 let foodEntries = loadEntries();
@@ -84,6 +87,7 @@ editModal.addEventListener('click', (e) => {
     if (e.target === editModal) closeEditModal();
 });
 editForm.addEventListener('submit', handleEditSubmit);
+customFoodsSearchInput.addEventListener('input', handleCustomFoodsSearch);
 
 // Add event listeners for serving multiplier
 numServingsInput.addEventListener('input', handleServingMultiplierChange);
@@ -364,6 +368,9 @@ async function searchFoodNutrition(foodName) {
 // Display search results in modal
 function displaySearchResults(foods) {
     modalTitle.textContent = 'Select Nutritional Information';
+    customFoodsSearch.classList.add('is-hidden');
+    customFoodsSearchInput.value = '';
+    customFoodsQuery = '';
     
     if (foods.length === 0) {
         searchResultsContainer.innerHTML = `
@@ -533,8 +540,11 @@ function handleEditSubmit(e) {
 // Show custom foods
 function showMyFoods() {
     modalTitle.textContent = 'My Custom Foods';
+    customFoodsSearchInput.value = '';
+    customFoodsQuery = '';
     
     if (customFoods.length === 0) {
+        customFoodsSearch.classList.add('is-hidden');
         searchResultsContainer.innerHTML = `
             <div class="no-results">
                 <strong>No custom foods yet</strong>
@@ -544,8 +554,37 @@ function showMyFoods() {
         openModal();
         return;
     }
+
+    customFoodsSearch.classList.remove('is-hidden');
+    renderCustomFoodsList(customFoods);
+    openModal();
+}
+
+function handleCustomFoodsSearch() {
+    customFoodsQuery = customFoodsSearchInput.value.trim().toLowerCase();
+    const filteredFoods = customFoods.filter(food =>
+        food.name.toLowerCase().includes(customFoodsQuery)
+    );
+    renderCustomFoodsList(filteredFoods);
+}
+
+function renderCustomFoodsList(foods) {
+    if (foods.length === 0) {
+        searchResultsContainer.innerHTML = customFoods.length === 0 ? `
+            <div class="no-results">
+                <strong>No custom foods yet</strong>
+                <p>Save your frequently used foods (supplements, protein powders, etc.) by checking "Save as custom food" when adding them!</p>
+            </div>
+        ` : `
+            <div class="no-results">
+                <strong>No matches found</strong>
+                <p>Try a different search term.</p>
+            </div>
+        `;
+        return;
+    }
     
-    searchResultsContainer.innerHTML = customFoods.map(food => `
+    searchResultsContainer.innerHTML = foods.map(food => `
         <div class="search-result-item custom-food-item" data-food='${JSON.stringify(food).replace(/'/g, "&apos;")}'>
             <button class="delete-custom-food" data-id="${food.id}">Delete</button>
             <div class="result-food-name">${food.name}</div>
@@ -580,8 +619,6 @@ function showMyFoods() {
             deleteCustomFood(id);
         });
     });
-    
-    openModal();
 }
 
 // Delete custom food

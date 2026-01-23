@@ -67,8 +67,8 @@
                     <label for="food-name">FOOD NAME</label>
                     <div class="search-group">
                         <input type="text" id="food-name" placeholder="Search or enter food name" required>
-                        <button type="button" id="search-btn" class="btn-icon">🔍</button>
-                        <button type="button" id="my-foods-btn" class="btn-icon">📚</button>
+                        <button type="button" id="search-btn" class="btn-icon">Search</button>
+                        <button type="button" id="my-foods-btn" class="btn-icon">My Foods</button>
                     </div>
                     <button type="button" id="toggle-details-btn" class="link-btn">▼ SHOW DETAILS</button>
                 </div>
@@ -138,8 +138,8 @@
             </div>
             
             <div class="data-controls">
-                <button id="export-data-btn" class="btn-text">📥 EXPORT</button>
-                <button id="import-data-btn" class="btn-text">📤 IMPORT</button>
+                <button id="export-data-btn" class="btn-export">↑ EXPORT</button>
+                <button id="import-data-btn" class="btn-import">↓ IMPORT</button>
                 <input type="file" id="import-file-input" accept=".json" style="display: none;">
             </div>
         </section>
@@ -215,6 +215,10 @@
                     <button class="close-modal" id="close-modal">✕</button>
                 </div>
                 <div class="modal-body">
+                    <div id="custom-foods-search" class="modal-search is-hidden">
+                        <label for="custom-foods-search-input">SEARCH MY FOODS</label>
+                        <input type="text" id="custom-foods-search-input" placeholder="Search custom foods">
+                    </div>
                     <div id="search-results"></div>
                 </div>
             </div>
