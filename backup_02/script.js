@@ -37,7 +37,6 @@ const modalTitle = document.getElementById('modal-title');
 const customFoodsSearch = document.getElementById('custom-foods-search');
 const customFoodsSearchInput = document.getElementById('custom-foods-search-input');
 const saveCustomFoodCheckbox = document.getElementById('save-custom-food');
-const layoutToggle = document.getElementById('layout-toggle');
 
 // Edit modal elements
 const editModal = document.getElementById('edit-modal');
@@ -64,31 +63,6 @@ let customFoodsQuery = '';
 let foodEntries = loadEntries();
 let customFoods = loadCustomFoods();
 let currentFilter = null;
-
-// Layout toggle
-const LAYOUT_KEY = 'foodTrackerLayout';
-const DEFAULT_LAYOUT = 'compact';
-
-function applyLayout(layout) {
-    const isSpacious = layout === 'spacious';
-    document.body.classList.toggle('is-spacious', isSpacious);
-    if (layoutToggle) {
-        layoutToggle.checked = !isSpacious;
-    }
-}
-
-function initializeLayoutToggle() {
-    if (!layoutToggle) return;
-
-    const savedLayout = localStorage.getItem(LAYOUT_KEY) || DEFAULT_LAYOUT;
-    applyLayout(savedLayout);
-
-    layoutToggle.addEventListener('change', () => {
-        const layout = layoutToggle.checked ? 'compact' : 'spacious';
-        localStorage.setItem(LAYOUT_KEY, layout);
-        applyLayout(layout);
-    });
-}
 
 // Set default date to today
 dateInput.valueAsDate = new Date();
@@ -1012,7 +986,6 @@ document.head.appendChild(style);
 
 // Initial render
 renderEntries();
-initializeLayoutToggle();
 
 // ===== STATS FUNCTIONALITY =====
 let caloriesChart = null;
@@ -1260,7 +1233,6 @@ function updateCaloriesChart(last7Days) {
     caloriesChart.update();
 }
 
-
 function updateMacrosChart(todayData) {
     if (!macrosChart) return;
     
@@ -1300,17 +1272,17 @@ function updateQuickStats(entries, last7Days) {
     // Total entries
     document.getElementById('total-entries').textContent = entries.length;
     
-    // Most energy intake (highest total calories day)
-    const dayCalories = {};
+    // Most active day
+    const dayCount = {};
     entries.forEach(entry => {
-        dayCalories[entry.date] = (dayCalories[entry.date] || 0) + (entry.calories || 0);
+        dayCount[entry.date] = (dayCount[entry.date] || 0) + 1;
     });
-
+    
     let bestDay = '—';
-    let maxCalories = 0;
-    for (const [date, totalCalories] of Object.entries(dayCalories)) {
-        if (totalCalories > maxCalories) {
-            maxCalories = totalCalories;
+    let maxEntries = 0;
+    for (const [date, count] of Object.entries(dayCount)) {
+        if (count > maxEntries) {
+            maxEntries = count;
             const dateObj = new Date(date + 'T00:00:00');
             bestDay = formatDateLabel(dateObj);
         }

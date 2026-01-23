@@ -19,11 +19,6 @@
                 <a href="#add">ADD</a>
                 <a href="#entries">ENTRIES</a>
                 <a href="#stats">STATS</a>
-                <label class="toggle-switch nav-toggle">
-                    <input type="checkbox" id="layout-toggle" checked>
-                    <span class="toggle-slider"></span>
-                    <span class="toggle-text">COMPACT</span>
-                </label>
             </div>
         </div>
     </nav>
@@ -125,7 +120,6 @@
                 <div class="form-actions">
                     <button type="submit" class="btn-primary">ADD FOOD</button>
                     <button type="button" id="clear-form-btn" class="btn-secondary">CLEAR</button>
-                    <button type="button" id="seed-data-btn" class="btn-seed">✨ SEED 7 DAYS</button>
                 </div>
             </form>
         </section>
@@ -141,6 +135,7 @@
             </div>
             
             <div class="data-controls">
+                <button id="seed-data-btn" class="btn-seed">✨ SEED 7 DAYS</button>
                 <button id="export-data-btn" class="btn-export">↑ EXPORT</button>
                 <button id="import-data-btn" class="btn-import">↓ IMPORT</button>
                 <input type="file" id="import-file-input" accept=".json" style="display: none;">
@@ -202,7 +197,7 @@
                     </div>
                     <div class="quick-stat-item">
                         <div class="quick-stat-value" id="best-day">—</div>
-                        <div class="quick-stat-label">MOST ENERGY INTAKE</div>
+                        <div class="quick-stat-label">MOST ACTIVE DAY</div>
                     </div>
                 </div>
             </div>
