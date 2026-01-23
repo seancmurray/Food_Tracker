@@ -24,6 +24,7 @@ const clearFilterBtn = document.getElementById('clear-filter');
 const exportDataBtn = document.getElementById('export-data-btn');
 const importDataBtn = document.getElementById('import-data-btn');
 const importFileInput = document.getElementById('import-file-input');
+const seedDataBtn = document.getElementById('seed-data-btn');
 const toggleDetailsBtn = document.getElementById('toggle-details-btn');
 const foodDetailsSection = document.getElementById('food-details-section');
 const searchBtn = document.getElementById('search-btn');
@@ -74,6 +75,7 @@ clearFormBtn.addEventListener('click', handleClearForm);
 exportDataBtn.addEventListener('click', handleExportData);
 importDataBtn.addEventListener('click', () => importFileInput.click());
 importFileInput.addEventListener('change', handleImportData);
+seedDataBtn.addEventListener('click', seedRandomEntries);
 toggleDetailsBtn.addEventListener('click', handleToggleDetails);
 searchBtn.addEventListener('click', handleSearchNutrition);
 myFoodsBtn.addEventListener('click', showMyFoods);
@@ -213,6 +215,17 @@ function deleteEntry(id) {
     }
 }
 
+// Delete all entries for a date
+function deleteEntriesByDate(date) {
+    const dateLabel = formatDate(date);
+    if (confirm(`Delete all entries for ${dateLabel}?`)) {
+        foodEntries = foodEntries.filter(entry => entry.date !== date);
+        saveEntries();
+        renderEntries();
+        showNotification('All entries for the day deleted.');
+    }
+}
+
 // Handle toggle details
 function handleToggleDetails() {
     const isCollapsed = foodDetailsSection.classList.contains('collapsed');
@@ -277,6 +290,85 @@ function handleExportData() {
     link.click();
     
     showNotification('Data exported successfully!');
+}
+
+// Seed random entries for last 7 days
+function seedRandomEntries() {
+    if (!confirm('This will add random entries for the last 7 days. Continue?')) return;
+
+    const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+    const sampleFoods = [
+        { name: 'Oatmeal', servingSize: '1 bowl', grams: 250 },
+        { name: 'Chicken Salad', servingSize: '1 plate', grams: 300 },
+        { name: 'Turkey Sandwich', servingSize: '1 sandwich', grams: 220 },
+        { name: 'Greek Yogurt', servingSize: '1 cup', grams: 200 },
+        { name: 'Protein Shake', servingSize: '1 bottle', grams: 330 },
+        { name: 'Salmon Bowl', servingSize: '1 bowl', grams: 320 },
+        { name: 'Pasta', servingSize: '1 plate', grams: 280 },
+        { name: 'Fruit Snack', servingSize: '1 cup', grams: 180 },
+        { name: 'Eggs & Toast', servingSize: '2 eggs + toast', grams: 200 },
+        { name: 'Veggie Wrap', servingSize: '1 wrap', grams: 210 }
+    ];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 7; i++) {
+        const dateObj = new Date(today);
+        dateObj.setDate(today.getDate() - i);
+        const dateStr = dateObj.toISOString().split('T')[0];
+
+        const dailyTarget = getRandomInt(1600, 2000);
+        const mealsForDay = mealTypes.map(type => ({
+            type,
+            calories: 0
+        }));
+
+        // Allocate calories across meals
+        const baseCalories = dailyTarget - 200; // leave room for randomness
+        const distribution = [0.25, 0.3, 0.3, 0.15];
+        mealsForDay.forEach((meal, idx) => {
+            const jitter = getRandomInt(-50, 50);
+            meal.calories = Math.max(200, Math.round(baseCalories * distribution[idx] + jitter));
+        });
+
+        // Normalize total to target range
+        let total = mealsForDay.reduce((sum, m) => sum + m.calories, 0);
+        const diff = dailyTarget - total;
+        mealsForDay[2].calories += diff; // adjust dinner
+
+        mealsForDay.forEach(meal => {
+            const food = sampleFoods[getRandomInt(0, sampleFoods.length - 1)];
+            const calories = meal.calories;
+            const protein = Math.round(calories * 0.25 / 4); // ~25% cals
+            const carbs = Math.round(calories * 0.45 / 4);   // ~45% cals
+            const fat = Math.round(calories * 0.30 / 9);     // ~30% cals
+            const sodium = getRandomInt(200, 900);
+
+            foodEntries.push({
+                id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+                date: dateStr,
+                mealType: meal.type,
+                foodName: food.name,
+                numServings: 1,
+                servingSize: food.servingSize,
+                grams: food.grams,
+                calories,
+                protein,
+                carbs,
+                fat,
+                sodium
+            });
+        });
+    }
+
+    saveEntries();
+    renderEntries();
+    showNotification('Random entries added for last 7 days.');
+}
+
+function getRandomInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 // Handle import data
@@ -661,7 +753,10 @@ function renderEntries() {
         
         return `
             <div class="date-group">
-                <div class="date-header">${formatDate(date)}</div>
+                <div class="date-header">
+                    <span>${formatDate(date)}</span>
+                    <button class="btn-delete-day" data-date="${date}">Delete Day</button>
+                </div>
                 <div class="date-summary">
                     <div class="summary-item"><strong>Total Calories:</strong> ${dailyTotals.calories}</div>
                     <div class="summary-item"><strong>Protein:</strong> ${dailyTotals.protein}g</div>
@@ -692,6 +787,14 @@ function renderEntries() {
         btn.addEventListener('click', (e) => {
             const id = e.target.dataset.id;
             deleteEntry(id);
+        });
+    });
+
+    // Attach delete-day event listeners
+    document.querySelectorAll('.btn-delete-day').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const date = e.target.dataset.date;
+            deleteEntriesByDate(date);
         });
     });
 }
