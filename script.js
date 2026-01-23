@@ -1,6 +1,7 @@
 // Storage keys for localStorage
 const STORAGE_KEY = 'foodTrackerData';
 const CUSTOM_FOODS_KEY = 'foodTrackerCustomFoods';
+const SEEDED_ENTRIES_KEY = 'foodTrackerSeededEntryIds';
 
 // Get DOM elements
 const foodForm = document.getElementById('food-form');
@@ -115,6 +116,17 @@ function loadCustomFoods() {
 // Save custom foods to localStorage
 function saveCustomFoods() {
     localStorage.setItem(CUSTOM_FOODS_KEY, JSON.stringify(customFoods));
+}
+
+// Load seeded entry ids from localStorage
+function loadSeededEntryIds() {
+    const data = localStorage.getItem(SEEDED_ENTRIES_KEY);
+    return data ? JSON.parse(data) : [];
+}
+
+// Save seeded entry ids to localStorage
+function saveSeededEntryIds(ids) {
+    localStorage.setItem(SEEDED_ENTRIES_KEY, JSON.stringify(ids));
 }
 
 // Handle form submission
@@ -296,6 +308,13 @@ function handleExportData() {
 function seedRandomEntries() {
     if (!confirm('This will add random entries for the last 7 days. Continue?')) return;
 
+    // Remove previously seeded entries
+    const seededIds = loadSeededEntryIds();
+    if (seededIds.length > 0) {
+        foodEntries = foodEntries.filter(entry => !seededIds.includes(entry.id));
+    }
+    foodEntries = foodEntries.filter(entry => entry.seedTag !== 'seed-7-days');
+
     const mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
     const sampleFoods = [
         { name: 'Oatmeal', servingSize: '1 bowl', grams: 250 },
@@ -312,6 +331,8 @@ function seedRandomEntries() {
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+
+    const newSeededIds = [];
 
     for (let i = 0; i < 7; i++) {
         const dateObj = new Date(today);
@@ -345,8 +366,9 @@ function seedRandomEntries() {
             const fat = Math.round(calories * 0.30 / 9);     // ~30% cals
             const sodium = getRandomInt(200, 900);
 
+            const entryId = Date.now().toString() + Math.random().toString(36).slice(2, 7);
             foodEntries.push({
-                id: Date.now().toString() + Math.random().toString(36).slice(2, 7),
+                id: entryId,
                 date: dateStr,
                 mealType: meal.type,
                 foodName: food.name,
@@ -357,12 +379,15 @@ function seedRandomEntries() {
                 protein,
                 carbs,
                 fat,
-                sodium
+                sodium,
+                seedTag: 'seed-7-days'
             });
+            newSeededIds.push(entryId);
         });
     }
 
     saveEntries();
+    saveSeededEntryIds(newSeededIds);
     renderEntries();
     showNotification('Random entries added for last 7 days.');
 }
