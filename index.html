@@ -3,210 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Food Tracker</title>
+    <title>FUEL - Food Tracker</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🍽️ Food Tracker</h1>
-            <p>Track your daily nutrition and meals</p>
-        </header>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="logo">FUEL</div>
+            <div class="nav-links">
+                <a href="#add">ADD</a>
+                <a href="#entries">ENTRIES</a>
+                <a href="#stats">STATS</a>
+            </div>
+        </div>
+    </nav>
 
-        <div class="input-section">
-            <h2>Add Food Entry</h2>
-            <form id="food-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="date">Date:</label>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">TRACK.<br>FUEL.<br>PERFORM.</h1>
+            <p class="hero-subtitle">Your nutrition journey starts here</p>
+        </div>
+    </section>
+
+    <div class="main-container">
+        <!-- Add Food Section -->
+        <section id="add" class="section add-section">
+
+        <!-- Add Food Section -->
+        <section id="add" class="section add-section">
+            <div class="section-header">
+                <h2 class="section-title">ADD MEAL</h2>
+            </div>
+            
+            <form id="food-form" class="food-form">
+                <div class="form-grid">
+                    <div class="form-field">
+                        <label for="date">DATE</label>
                         <input type="date" id="date" required>
                     </div>
-                    <div class="form-group">
-                        <label for="meal-type">Meal Type:</label>
+                    <div class="form-field">
+                        <label for="meal-type">MEAL TYPE</label>
                         <select id="meal-type" required>
-                            <option value="">Select Meal</option>
-                            <option value="Breakfast">Breakfast</option>
-                            <option value="Lunch">Lunch</option>
-                            <option value="Dinner">Dinner</option>
-                            <option value="Snack">Snack</option>
+                            <option value="">SELECT</option>
+                            <option value="Breakfast">BREAKFAST</option>
+                            <option value="Lunch">LUNCH</option>
+                            <option value="Dinner">DINNER</option>
+                            <option value="Snack">SNACK</option>
                         </select>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group full-width">
-                        <label for="food-name">Food Name:</label>
-                        <div class="search-input-group">
-                            <input type="text" id="food-name" placeholder="e.g., Grilled Chicken" required>
-                            <button type="button" id="search-btn" class="btn-search">🔍 Search Nutrition</button>
-                            <button type="button" id="my-foods-btn" class="btn-my-foods">📚 My Foods</button>
-                        </div>
-                        <button type="button" id="toggle-details-btn" class="toggle-details">▼ Show Details</button>
+                <div class="form-field full">
+                    <label for="food-name">FOOD NAME</label>
+                    <div class="search-group">
+                        <input type="text" id="food-name" placeholder="Search or enter food name" required>
+                        <button type="button" id="search-btn" class="btn-icon">🔍</button>
+                        <button type="button" id="my-foods-btn" class="btn-icon">📚</button>
                     </div>
+                    <button type="button" id="toggle-details-btn" class="link-btn">▼ SHOW DETAILS</button>
                 </div>
 
-                <div id="food-details-section" class="collapsible-section">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="num-servings">Number of Servings:</label>
+                <div id="food-details-section" class="details-section collapsed">
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="num-servings">SERVINGS</label>
                             <input type="number" id="num-servings" min="0.1" step="0.1" value="1" placeholder="1">
                         </div>
-                        <div class="form-group">
-                            <label for="serving-size">Serving Size:</label>
-                            <input type="text" id="serving-size" placeholder="e.g., 1 cup, 2 slices, 1 serving" required>
+                        <div class="form-field">
+                            <label for="serving-size">SIZE</label>
+                            <input type="text" id="serving-size" placeholder="e.g., 1 cup" required>
                         </div>
-                        <div class="form-group">
-                            <label for="grams">Weight (grams):</label>
-                            <input type="number" id="grams" min="0" step="0.1" placeholder="e.g., 100">
+                        <div class="form-field">
+                            <label for="grams">GRAMS</label>
+                            <input type="number" id="grams" min="0" step="0.1" placeholder="100">
                         </div>
                     </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="calories">Calories:</label>
+                    <div class="form-grid macros-grid">
+                        <div class="form-field">
+                            <label for="calories">CALORIES</label>
                             <input type="number" id="calories" min="0" placeholder="0" required>
                         </div>
-                        <div class="form-group">
-                            <label for="protein">Protein (g):</label>
+                        <div class="form-field">
+                            <label for="protein">PROTEIN (G)</label>
                             <input type="number" id="protein" min="0" step="0.1" placeholder="0" required>
                         </div>
-                        <div class="form-group">
-                            <label for="carbs">Carbs (g):</label>
+                        <div class="form-field">
+                            <label for="carbs">CARBS (G)</label>
                             <input type="number" id="carbs" min="0" step="0.1" placeholder="0" required>
                         </div>
-                        <div class="form-group">
-                            <label for="fat">Fat (g):</label>
+                        <div class="form-field">
+                            <label for="fat">FAT (G)</label>
                             <input type="number" id="fat" min="0" step="0.1" placeholder="0" required>
                         </div>
-                        <div class="form-group">
-                            <label for="sodium">Sodium (mg):</label>
+                        <div class="form-field">
+                            <label for="sodium">SODIUM (MG)</label>
                             <input type="number" id="sodium" min="0" step="1" placeholder="0" required>
                         </div>
                     </div>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="save-custom-food">
-                            Save this as a custom food for future use
-                        </label>
-                    </div>
+                <div class="form-field checkbox-field">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="save-custom-food">
+                        <span>SAVE AS CUSTOM FOOD</span>
+                    </label>
                 </div>
 
-                <div class="form-buttons">
-                    <button type="submit" class="btn-add">Add Food</button>
-                    <button type="button" id="clear-form-btn" class="btn-secondary">Clear</button>
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">ADD FOOD</button>
+                    <button type="button" id="clear-form-btn" class="btn-secondary">CLEAR</button>
                 </div>
             </form>
-        </div>
+        </section>
 
-        <div class="filter-section">
-            <label for="filter-date">Filter by Date:</label>
-            <input type="date" id="filter-date">
-            <button id="clear-filter" class="btn-secondary">Show All</button>
+        <!-- Filter Section -->
+        <section class="filter-bar">
+            <div class="filter-controls">
+                <div class="filter-item">
+                    <label for="filter-date">FILTER BY DATE</label>
+                    <input type="date" id="filter-date">
+                </div>
+                <button id="clear-filter" class="btn-text">SHOW ALL</button>
+            </div>
             
-            <div class="data-management">
-                <button id="export-data-btn" class="btn-export">📥 Export Data</button>
-                <button id="import-data-btn" class="btn-import">📤 Import Data</button>
+            <div class="data-controls">
+                <button id="export-data-btn" class="btn-text">📥 EXPORT</button>
+                <button id="import-data-btn" class="btn-text">📤 IMPORT</button>
                 <input type="file" id="import-file-input" accept=".json" style="display: none;">
             </div>
-        </div>
+        </section>
 
-        <div class="entries-section">
-            <h2>Food Entries</h2>
+        <!-- Entries Section -->
+        <section id="entries" class="section entries-section">
+            <div class="section-header">
+                <h2 class="section-title">YOUR ENTRIES</h2>
+            </div>
             <div id="entries-container"></div>
-        </div>
+        </section>
     </div>
 
     <!-- Search Results Modal -->
     <div id="search-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="modal-title">Select Nutritional Information</h3>
-                <button class="close-modal" id="close-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div id="search-results"></div>
+        <div class="modal-wrapper">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3 id="modal-title">SELECT NUTRITION INFO</h3>
+                    <button class="close-modal" id="close-modal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <div id="search-results"></div>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Edit Food Modal -->
     <div id="edit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Edit Food Entry</h3>
-                <button class="close-modal" id="close-edit-modal">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="edit-form">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-date">Date:</label>
-                            <input type="date" id="edit-date" required>
+        <div class="modal-wrapper">
+            <div class="modal-container">
+                <div class="modal-header">
+                    <h3>EDIT ENTRY</h3>
+                    <button class="close-modal" id="close-edit-modal">✕</button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-form">
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="edit-date">DATE</label>
+                                <input type="date" id="edit-date" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-meal-type">MEAL TYPE</label>
+                                <select id="edit-meal-type" required>
+                                    <option value="Breakfast">BREAKFAST</option>
+                                    <option value="Lunch">LUNCH</option>
+                                    <option value="Dinner">DINNER</option>
+                                    <option value="Snack">SNACK</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="edit-meal-type">Meal Type:</label>
-                            <select id="edit-meal-type" required>
-                                <option value="Breakfast">Breakfast</option>
-                                <option value="Lunch">Lunch</option>
-                                <option value="Dinner">Dinner</option>
-                                <option value="Snack">Snack</option>
-                            </select>
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group full-width">
-                            <label for="edit-food-name">Food Name:</label>
+                        <div class="form-field full">
+                            <label for="edit-food-name">FOOD NAME</label>
                             <input type="text" id="edit-food-name" required>
                         </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-num-servings">Number of Servings:</label>
-                            <input type="number" id="edit-num-servings" min="0.1" step="0.1" value="1">
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label for="edit-num-servings">SERVINGS</label>
+                                <input type="number" id="edit-num-servings" min="0.1" step="0.1" value="1">
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-serving-size">SIZE</label>
+                                <input type="text" id="edit-serving-size" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-grams">GRAMS</label>
+                                <input type="number" id="edit-grams" min="0" step="0.1">
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="edit-serving-size">Serving Size:</label>
-                            <input type="text" id="edit-serving-size" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-grams">Weight (grams):</label>
-                            <input type="number" id="edit-grams" min="0" step="0.1">
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="edit-calories">Calories:</label>
-                            <input type="number" id="edit-calories" min="0" required>
+                        <div class="form-grid macros-grid">
+                            <div class="form-field">
+                                <label for="edit-calories">CALORIES</label>
+                                <input type="number" id="edit-calories" min="0" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-protein">PROTEIN (G)</label>
+                                <input type="number" id="edit-protein" min="0" step="0.1" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-carbs">CARBS (G)</label>
+                                <input type="number" id="edit-carbs" min="0" step="0.1" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-fat">FAT (G)</label>
+                                <input type="number" id="edit-fat" min="0" step="0.1" required>
+                            </div>
+                            <div class="form-field">
+                                <label for="edit-sodium">SODIUM (MG)</label>
+                                <input type="number" id="edit-sodium" min="0" step="1" required>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="edit-protein">Protein (g):</label>
-                            <input type="number" id="edit-protein" min="0" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-carbs">Carbs (g):</label>
-                            <input type="number" id="edit-carbs" min="0" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-fat">Fat (g):</label>
-                            <input type="number" id="edit-fat" min="0" step="0.1" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="edit-sodium">Sodium (mg):</label>
-                            <input type="number" id="edit-sodium" min="0" step="1" required>
-                        </div>
-                    </div>
 
-                    <div class="form-row">
-                        <button type="submit" class="btn-add">Save Changes</button>
-                        <button type="button" class="btn-secondary" id="cancel-edit">Cancel</button>
-                    </div>
-                </form>
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">SAVE CHANGES</button>
+                            <button type="button" class="btn-secondary" id="cancel-edit">CANCEL</button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
