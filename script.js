@@ -78,7 +78,7 @@ const HERO_BACKGROUND_IMAGES = [
     'main_background/background_07.jpg',
     'main_background/background_08.jpg',
     'main_background/background_09.jpg',
-    'main_background/Hood_to_coast_01.jpg'
+    'main_background/background_10.jpg'
 ];
 
 function applyLayout(layout) {
