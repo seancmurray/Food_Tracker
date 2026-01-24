@@ -64,10 +64,22 @@ let customFoodsQuery = '';
 let foodEntries = loadEntries();
 let customFoods = loadCustomFoods();
 let currentFilter = null;
+saveEntries();
 
 // Layout toggle
 const LAYOUT_KEY = 'foodTrackerLayout';
 const DEFAULT_LAYOUT = 'compact';
+const HERO_BACKGROUND_IMAGES = [
+    'main_background/background_01.jpg',
+    'main_background/background_02.jpg',
+    'main_background/background_03.jpg',
+    'main_background/background_04.jpg',
+    'main_background/background_05.jpg',
+    'main_background/background_07.jpg',
+    'main_background/background_08.jpg',
+    'main_background/background_09.jpg',
+    'main_background/Hood_to_coast_01.jpg'
+];
 
 function applyLayout(layout) {
     const isSpacious = layout === 'spacious';
@@ -88,6 +100,101 @@ function initializeLayoutToggle() {
         localStorage.setItem(LAYOUT_KEY, layout);
         applyLayout(layout);
     });
+}
+
+function initializeHeroBackgroundRotation() {
+    const hero = document.querySelector('.hero');
+    if (!hero) return;
+
+    const layers = hero.querySelectorAll('.hero-background');
+    const dotsContainer = hero.querySelector('.hero-dots');
+    if (!HERO_BACKGROUND_IMAGES.length) return;
+
+    let currentIndex = 0;
+    let activeLayer = 0;
+    let autoSlideInterval;
+    const transitionDuration = 1000;
+
+    const setLayerImage = (layerIndex, imageIndex) => {
+        if (!layers[layerIndex]) return;
+        layers[layerIndex].style.backgroundImage = `url('${HERO_BACKGROUND_IMAGES[imageIndex]}')`;
+    };
+
+    const updateDots = () => {
+        if (!dotsContainer) return;
+        dotsContainer.querySelectorAll('.hero-dot').forEach((dot, index) => {
+            dot.classList.toggle('is-active', index === currentIndex);
+        });
+    };
+
+    const goToBackground = (index) => {
+        currentIndex = index;
+        slideToCurrent();
+    };
+
+    const changeBackground = () => {
+        currentIndex = (currentIndex + 1) % HERO_BACKGROUND_IMAGES.length;
+        slideToCurrent();
+    };
+
+    const slideToCurrent = () => {
+        if (!layers.length) return;
+
+        const nextLayer = (activeLayer + 1) % layers.length;
+        setLayerImage(nextLayer, currentIndex);
+
+        layers[nextLayer].classList.remove('is-reset');
+        layers[nextLayer].classList.remove('is-exit');
+        layers[nextLayer].classList.remove('is-active');
+
+        void layers[nextLayer].offsetWidth;
+        layers[nextLayer].classList.add('is-active');
+
+        layers[activeLayer].classList.remove('is-active');
+        layers[activeLayer].classList.add('is-exit');
+
+        const previousLayer = activeLayer;
+        activeLayer = nextLayer;
+
+        window.setTimeout(() => {
+            if (layers[previousLayer]) {
+                layers[previousLayer].classList.add('is-reset');
+                layers[previousLayer].classList.remove('is-exit');
+                layers[previousLayer].classList.remove('is-active');
+                void layers[previousLayer].offsetWidth;
+                layers[previousLayer].classList.remove('is-reset');
+            }
+        }, transitionDuration);
+
+        updateDots();
+        resetAutoSlide();
+    };
+
+    const resetAutoSlide = () => {
+        clearInterval(autoSlideInterval);
+        if (HERO_BACKGROUND_IMAGES.length < 2) return;
+        autoSlideInterval = setInterval(changeBackground, 6000);
+    };
+
+    if (dotsContainer) {
+        dotsContainer.innerHTML = '';
+        HERO_BACKGROUND_IMAGES.forEach((image, index) => {
+            const dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = 'hero-dot';
+            dot.setAttribute('aria-label', `Show background ${index + 1}`);
+            dot.addEventListener('click', () => goToBackground(index));
+            dotsContainer.appendChild(dot);
+        });
+    }
+
+    if (layers.length) {
+        setLayerImage(activeLayer, currentIndex);
+        layers[activeLayer].classList.add('is-active');
+    }
+
+    updateDots();
+    resetAutoSlide();
 }
 
 // Set default date to today
@@ -125,7 +232,8 @@ editNumServingsInput.addEventListener('input', handleEditServingMultiplierChange
 // Load entries from localStorage
 function loadEntries() {
     const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const entries = data ? JSON.parse(data) : [];
+    return normalizeEntries(entries);
 }
 
 // Save entries to localStorage
@@ -155,13 +263,44 @@ function saveSeededEntryIds(ids) {
     localStorage.setItem(SEEDED_ENTRIES_KEY, JSON.stringify(ids));
 }
 
+function normalizeDateString(dateValue) {
+    if (!dateValue) return '';
+
+    if (typeof dateValue === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateValue)) {
+        return dateValue;
+    }
+
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) {
+        return '';
+    }
+
+    return getLocalDateString(parsed);
+}
+
+function normalizeEntries(entries) {
+    if (!Array.isArray(entries)) return [];
+
+    return entries.map(entry => {
+        if (!entry || typeof entry !== 'object') return entry;
+        const normalizedDate = normalizeDateString(entry.date);
+        if (!normalizedDate || entry.date === normalizedDate) {
+            return entry;
+        }
+        return {
+            ...entry,
+            date: normalizedDate
+        };
+    });
+}
+
 // Handle form submission
 function handleAddFood(e) {
     e.preventDefault();
     
     const newEntry = {
         id: Date.now().toString(),
-        date: dateInput.value,
+        date: normalizeDateString(dateInput.value),
         mealType: mealTypeInput.value,
         foodName: foodNameInput.value.trim(),
         numServings: parseFloat(numServingsInput.value) || 1,
@@ -363,7 +502,7 @@ function seedRandomEntries() {
     for (let i = 0; i < 7; i++) {
         const dateObj = new Date(today);
         dateObj.setDate(today.getDate() - i);
-        const dateStr = dateObj.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(dateObj);
 
         const dailyTarget = getRandomInt(1600, 2000);
         const mealsForDay = mealTypes.map(type => ({
@@ -418,6 +557,13 @@ function seedRandomEntries() {
     showNotification('Random entries added for last 7 days.');
 }
 
+function getLocalDateString(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
 function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -446,7 +592,7 @@ function handleImportData(event) {
             }
             
             // Import data
-            foodEntries = importData.foodEntries;
+            foodEntries = normalizeEntries(importData.foodEntries);
             customFoods = importData.customFoods || [];
             
             // Save to localStorage
@@ -661,7 +807,7 @@ function handleEditSubmit(e) {
     // Update the entry
     foodEntries[entryIndex] = {
         id: currentEditId,
-        date: editDateInput.value,
+        date: normalizeDateString(editDateInput.value),
         mealType: editMealTypeInput.value,
         foodName: editFoodNameInput.value.trim(),
         numServings: parseFloat(editNumServingsInput.value) || 1,
@@ -1013,6 +1159,7 @@ document.head.appendChild(style);
 // Initial render
 renderEntries();
 initializeLayoutToggle();
+initializeHeroBackgroundRotation();
 
 // ===== STATS FUNCTIONALITY =====
 let caloriesChart = null;
@@ -1124,7 +1271,8 @@ function initializeCharts() {
                     backgroundColor: 'rgba(215, 57, 46, 0.1)',
                     borderWidth: 3,
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    yAxisID: 'y'
                 },
                 {
                     label: 'Protein (g)',
@@ -1133,7 +1281,8 @@ function initializeCharts() {
                     backgroundColor: 'rgba(236, 101, 51, 0.1)',
                     borderWidth: 3,
                     tension: 0.4,
-                    fill: true
+                    fill: true,
+                    yAxisID: 'y1'
                 }
             ]
         },
@@ -1150,6 +1299,37 @@ function initializeCharts() {
                             family: "'Inter', sans-serif",
                             weight: 600
                         }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Calories',
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 700
+                        },
+                        color: '#000000'
+                    }
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    ticks: {
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 600
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Protein (g)',
+                        font: {
+                            family: "'Inter', sans-serif",
+                            weight: 700
+                        },
+                        color: '#000000'
                     }
                 },
                 x: {
@@ -1215,7 +1395,7 @@ function getLast7DaysData(entries) {
     for (let i = 6; i >= 0; i--) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
+        const dateStr = getLocalDateString(date);
         
         const dayEntries = entries.filter(entry => entry.date === dateStr);
         const totals = calculateDayTotals(dayEntries);
@@ -1231,7 +1411,7 @@ function getLast7DaysData(entries) {
 }
 
 function getTodayData(entries) {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString(new Date());
     const todayEntries = entries.filter(entry => entry.date === today);
     return calculateDayTotals(todayEntries);
 }
@@ -1270,8 +1450,17 @@ function updateMacrosChart(todayData) {
     const proteinCals = protein * 4;
     const carbsCals = carbs * 4;
     const fatCals = fat * 9;
-    
-    macrosChart.data.datasets[0].data = [proteinCals, carbsCals, fatCals];
+
+    const totalCals = proteinCals + carbsCals + fatCals;
+    if (totalCals === 0) {
+        macrosChart.data.datasets[0].data = [1, 1, 1];
+        macrosChart.data.datasets[0].backgroundColor = ['#e5e5e5', '#e5e5e5', '#e5e5e5'];
+        macrosChart.data.datasets[0].borderColor = '#ffffff';
+    } else {
+        macrosChart.data.datasets[0].data = [proteinCals, carbsCals, fatCals];
+        macrosChart.data.datasets[0].backgroundColor = ['#d7392e', '#ec6533', '#000000'];
+        macrosChart.data.datasets[0].borderColor = '#ffffff';
+    }
     macrosChart.update();
 }
 
