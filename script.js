@@ -37,8 +37,6 @@ const modalTitle = document.getElementById('modal-title');
 const customFoodsSearch = document.getElementById('custom-foods-search');
 const customFoodsSearchInput = document.getElementById('custom-foods-search-input');
 const saveCustomFoodCheckbox = document.getElementById('save-custom-food');
-const layoutToggle = document.getElementById('layout-toggle');
-
 // Edit modal elements
 const editModal = document.getElementById('edit-modal');
 const closeEditModalBtn = document.getElementById('close-edit-modal');
@@ -66,9 +64,6 @@ let customFoods = loadCustomFoods();
 let currentFilter = null;
 saveEntries();
 
-// Layout toggle
-const LAYOUT_KEY = 'foodTrackerLayout';
-const DEFAULT_LAYOUT = 'compact';
 const HERO_BACKGROUND_IMAGES = [
     'main_background/background_01.jpg',
     'main_background/background_02.jpg',
@@ -80,27 +75,6 @@ const HERO_BACKGROUND_IMAGES = [
     'main_background/background_09.jpg',
     'main_background/background_10.jpg'
 ];
-
-function applyLayout(layout) {
-    const isSpacious = layout === 'spacious';
-    document.body.classList.toggle('is-spacious', isSpacious);
-    if (layoutToggle) {
-        layoutToggle.checked = !isSpacious;
-    }
-}
-
-function initializeLayoutToggle() {
-    if (!layoutToggle) return;
-
-    const savedLayout = localStorage.getItem(LAYOUT_KEY) || DEFAULT_LAYOUT;
-    applyLayout(savedLayout);
-
-    layoutToggle.addEventListener('change', () => {
-        const layout = layoutToggle.checked ? 'compact' : 'spacious';
-        localStorage.setItem(LAYOUT_KEY, layout);
-        applyLayout(layout);
-    });
-}
 
 function initializeHeroBackgroundRotation() {
     const hero = document.querySelector('.hero');
@@ -1158,7 +1132,6 @@ document.head.appendChild(style);
 
 // Initial render
 renderEntries();
-initializeLayoutToggle();
 initializeHeroBackgroundRotation();
 
 // ===== STATS FUNCTIONALITY =====
