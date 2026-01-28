@@ -37,6 +37,7 @@ const modalTitle = document.getElementById('modal-title');
 const customFoodsSearch = document.getElementById('custom-foods-search');
 const customFoodsSearchInput = document.getElementById('custom-foods-search-input');
 const saveCustomFoodCheckbox = document.getElementById('save-custom-food');
+const themeToggleBtn = document.getElementById('theme-toggle');
 // Edit modal elements
 const editModal = document.getElementById('edit-modal');
 const closeEditModalBtn = document.getElementById('close-edit-modal');
@@ -63,6 +64,8 @@ let foodEntries = loadEntries();
 let customFoods = loadCustomFoods();
 let currentFilter = null;
 saveEntries();
+
+const THEME_KEY = 'foodTrackerTheme';
 
 const HERO_BACKGROUND_IMAGES = [
     'main_background/background_01.jpg',
@@ -174,6 +177,27 @@ function initializeHeroBackgroundRotation() {
 // Set default date to today
 dateInput.valueAsDate = new Date();
 
+function getPreferredTheme() {
+    const savedTheme = localStorage.getItem(THEME_KEY);
+    if (savedTheme === 'dark' || savedTheme === 'light') {
+        return savedTheme;
+    }
+    return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+}
+
+function applyTheme(theme) {
+    const isDark = theme === 'dark';
+    document.body.classList.toggle('theme-dark', isDark);
+    if (themeToggleBtn) {
+        themeToggleBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+        themeToggleBtn.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
+    }
+}
+
+applyTheme(getPreferredTheme());
+
 // Event listeners
 foodForm.addEventListener('submit', handleAddFood);
 filterDateInput.addEventListener('change', handleFilterChange);
@@ -198,6 +222,26 @@ editModal.addEventListener('click', (e) => {
 });
 editForm.addEventListener('submit', handleEditSubmit);
 customFoodsSearchInput.addEventListener('input', handleCustomFoodsSearch);
+
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', () => {
+        const nextTheme = document.body.classList.contains('theme-dark') ? 'light' : 'dark';
+        applyTheme(nextTheme);
+        localStorage.setItem(THEME_KEY, nextTheme);
+    });
+}
+
+try {
+    const mql = window.matchMedia('(prefers-color-scheme: dark)');
+    mql.addEventListener && mql.addEventListener('change', e => {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored !== 'dark' && stored !== 'light') {
+            applyTheme(e.matches ? 'dark' : 'light');
+        }
+    });
+} catch (e) {
+    // ignore if matchMedia not supported
+}
 
 // Add event listeners for serving multiplier
 numServingsInput.addEventListener('input', handleServingMultiplierChange);
